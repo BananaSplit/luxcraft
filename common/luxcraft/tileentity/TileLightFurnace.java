@@ -3,7 +3,7 @@ package luxcraft.tileentity;
 import buildcraft.api.power.IPowerProvider;
 import buildcraft.api.power.IPowerReceptor;
 import buildcraft.api.power.PowerFramework;
-import net.minecraft.block.BlockFurnace;
+import buildcraft.api.transport.IPipeConnection;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -13,7 +13,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.ForgeDirection;
 
-public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInventory {
+public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInventory, IPipeConnection {
    
     IPowerProvider powerProvider;
     
@@ -25,11 +25,9 @@ public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInv
     public TileLightFurnace() {
         
         powerProvider = PowerFramework.currentFramework.createPowerProvider();
-        powerProvider.configure(20, 1, 25, 25, 10000);
+        powerProvider.configure(20, 1, 25, 25, 5000);
         
         this.inventory = new ItemStack[3];
-        
-        System.out.println("TILE ENTITY WAS INITILIALIZED !");
         
     }
 
@@ -81,9 +79,13 @@ public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInv
                     this.smeltItem();
                     cookTime = 0;
                 }
-                
+
             }
-            
+            else
+            {
+                cookTime = 0;
+            }
+
         }
 
         if (flag1)
@@ -244,6 +246,11 @@ public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInv
         this.getPowerProvider().useEnergy(caca, caca, true);   
     }
     
+    @Override
+    public boolean isPipeConnected(ForgeDirection with) {
+        return true;
+    }
+    
     /**
      * Reads a tile entity from NBT.
      */
@@ -263,8 +270,9 @@ public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInv
                 this.inventory[b0] = ItemStack.loadItemStackFromNBT(nbttagcompound1);
             }
         }
-
-        this.setEnergyStored(par1NBTTagCompound.getShort("EnergyStored"));
+        
+        PowerFramework.currentFramework.loadPowerProvider(this, par1NBTTagCompound);
+        powerProvider.configure(20, 1, 25, 25, 5000);
     }
 
     /**
@@ -273,7 +281,9 @@ public class TileLightFurnace extends TileEntity implements IPowerReceptor, IInv
     public void writeToNBT(NBTTagCompound par1NBTTagCompound)
     {
         super.writeToNBT(par1NBTTagCompound);
-        par1NBTTagCompound.setShort("EnergyStored", (short)this.getPowerProvider().getEnergyStored());
+        
+        PowerFramework.currentFramework.savePowerProvider(this, par1NBTTagCompound);
+        
         NBTTagList nbttaglist = new NBTTagList();
 
         for (int i = 0; i < this.inventory.length; ++i)
